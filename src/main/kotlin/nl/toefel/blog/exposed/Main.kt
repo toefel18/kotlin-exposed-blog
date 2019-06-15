@@ -91,4 +91,42 @@ fun main() {
 
 
 
+
+
+    log.info("Mapping to a domain class")
+    transaction {
+        data class CityRecord(val id: Int, val name: String, val size: Long)
+
+        Cities.select{ Cities.name eq "Utrecht"}
+            .map { CityRecord(it[Cities.id], it[Cities.name], it[Cities.inhabitants]) }
+            .forEach {log.info("City record of utrecht: $it") }
+    }
+
+    log.info("Batch inserting users")
+    data class UserRecord(val id: String, val name: String, val cityName: String)
+    val newUsers = listOf(
+        UserRecord("1000", "Sjaak", "Amsterdam"),
+        UserRecord("1001", "Kees", "Utrecht"),
+        UserRecord("1002", "Marja", "Amsterdam"),
+        UserRecord("1003", "Ronnie", "Unknown"),
+        UserRecord("1004", "Majo", "Rotterdam")
+    )
+    transaction {
+        Users.batchInsert(newUsers) { user ->
+            this[Users.id] = user.id
+            this[Users.name] = user.name
+            this[Users.cityId] = Cities.slice(Cities.id)
+                .select { Cities.name eq user.cityName }
+                .map { it[Cities.id] }
+                .firstOrNull()
+        }
+    }
+
+    log.info("Selecting all users")
+    transaction {
+        Users.selectAll().forEach {
+            log.info("id=${it[Users.id]} name=${it[Users.name]} cityId=${it[Users.cityId]}")
+        }
+    }
+
 }
