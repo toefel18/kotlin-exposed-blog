@@ -129,4 +129,14 @@ fun main() {
         }
     }
 
+
+
+    log.info("Selecting all users and their city using JOIN")
+    transaction {
+        (Users leftJoin Cities)
+            .slice(Users.name, Cities.name)
+            .select { Cities.name.isNotNull()}
+            .forEach { log.info("User ${it[Users.name]} lives in ${it[Cities.name]}") }
+    }
+
 }
