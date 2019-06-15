@@ -60,4 +60,35 @@ fun main() {
     }
 
 
+
+
+
+
+    transaction {
+        log.info("There are ${Cities.selectAll().count()} cities")
+
+        log.info("All cities:")
+        Cities.selectAll().forEach {
+            log.info("${it[Cities.name]} with ${it[Cities.inhabitants]} inhabitants")
+        }
+
+        log.info("Cities with more inhabitants than 100000")
+        Cities.select {Cities.inhabitants greater 100000L }.forEach {
+            log.info(it[Cities.name])
+        }
+    }
+
+    log.info("Fetching all city names and returning it from the transaction as a list")
+
+    val cityNames = transaction {
+        Cities.slice(Cities.name)
+            .selectAll()
+            .orderBy(Cities.name, SortOrder.DESC)
+            .map { it[Cities.name] }
+    }
+    log.info("City names in reverse order: $cityNames")
+
+
+
+
 }
