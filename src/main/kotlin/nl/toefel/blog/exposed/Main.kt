@@ -11,7 +11,7 @@ object Users : Table() {
     val id = varchar("id", 10).primaryKey() // Column<String>
     val name = varchar("name", length = 50) // Column<String>
     val cityId = (integer("city_id") references Cities.id).nullable() // Column<Int?>
-    val randomIdForRandomJoin = integer("random_id").nullable()
+    val alternateCityId = integer("alternate_city_id").nullable()
 }
 
 object Cities : Table() {
@@ -55,7 +55,7 @@ fun main() {
             it[id] = "1"
             it[name] = "Chris"
             it[cityId] = utrecht[Cities.id]
-            it[randomIdForRandomJoin] = utrecht[Cities.id]
+            it[alternateCityId] = amsterdam[Cities.id]
         }
     }
 
@@ -138,5 +138,17 @@ fun main() {
             .select { Cities.name.isNotNull()}
             .forEach { log.info("User ${it[Users.name]} lives in ${it[Cities.name]}") }
     }
+
+
+
+    log.info("Joining based on a column that is not defined as a foreign key")
+    transaction {
+        // only user Chris has the column alternateCityId set to an id of a city, see line 58
+        Users.join(Cities, JoinType.LEFT, onColumn = Users.alternateCityId, otherColumn = Cities.id)
+            .slice(Users.name, Cities.name)
+            .select { Cities.name.isNotNull()}
+            .forEach { log.info("User ${it[Users.name]} has as alternate city: ${it[Cities.name]}") }
+    }
+
 
 }
