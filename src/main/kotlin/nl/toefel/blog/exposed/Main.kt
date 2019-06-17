@@ -177,7 +177,7 @@ fun main() {
                 it[cityId] = groningenId
             }
         }
-        rollback()
+        rollback()      // rolls back the groningen and user inserts~!
         // this will still be inserted!
         Cities.insert { it[name] = "Groningen2"; it[inhabitants] = 750000 } get id
     }
