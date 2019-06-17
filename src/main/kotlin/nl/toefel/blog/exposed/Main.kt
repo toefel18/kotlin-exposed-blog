@@ -1,5 +1,6 @@
 package nl.toefel.blog.exposed
 
+import nl.toefel.blog.exposed.Cities.id
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.Logger
@@ -31,7 +32,7 @@ fun main() {
         SchemaUtils.create(Cities, Users)
     }
 
-    log.info("Inserting cities: amsterdam and utrecht and a user toefel")
+    log.info("Inserting some cities and a user")
     transaction {
         log.info("inserting amsterdam")
         val amsterdam = Cities.insert {
@@ -112,7 +113,7 @@ fun main() {
         UserRecord("1004", "Majo", "Rotterdam")
     )
     transaction {
-        Users.batchInsert(newUsers) { user ->
+        val x = Users.batchInsert(newUsers) { user ->
             this[Users.id] = user.id
             this[Users.name] = user.name
             this[Users.cityId] = Cities.slice(Cities.id)
@@ -121,6 +122,20 @@ fun main() {
                 .firstOrNull()
         }
     }
+
+
+    log.info("Trying to insert user with missing field name")
+    transaction {
+        try {
+            Users.insert {
+                it[id] = "123"
+                it[cityId] = 1
+            }
+        } catch (ex: Exception) {
+            println(ex.message)
+        }
+    }
+
 
     log.info("Selecting all users")
     transaction {
@@ -148,6 +163,23 @@ fun main() {
             .slice(Users.name, Cities.name)
             .select { Cities.name.isNotNull()}
             .forEach { log.info("User ${it[Users.name]} has as alternate city: ${it[Cities.name]}") }
+    }
+
+
+
+    log.info("Nested transactions")
+    transaction {
+        val groningenId = Cities.insert { it[name] = "Groningen"; it[inhabitants] = 740000 } get id
+        transaction {
+            Users.insert {
+                it[id] = "12356"
+                it[name] = "Groninger"
+                it[cityId] = groningenId
+            }
+        }
+        rollback()
+        // this will still be inserted!
+        Cities.insert { it[name] = "Groningen2"; it[inhabitants] = 750000 } get id
     }
 
 
