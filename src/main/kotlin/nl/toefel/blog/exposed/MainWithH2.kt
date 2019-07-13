@@ -11,20 +11,13 @@ import org.slf4j.LoggerFactory
 class MainWithH2 {
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(MainWithH2::class.java)
+        val h2ConnectionString = "jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;"
 
         @JvmStatic
         fun main(args: Array<String>) {
-            val h2ConnectionString = "jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;"
-
             logger.info("H2 database connection string: $h2ConnectionString")
-
-            // Database.connect will initialize and track H2 for use by Kotlin Exposed.
-            // Code can start a transaction to interact with the database
-            //
-            // transaction {
-            //     Interact with tables like Actors/Movies
-            // }
-            Database.connect(h2ConnectionString, driver = "org.h2.Driver")
+            val db = Database.connect(h2ConnectionString, driver = "org.h2.Driver")
+            db.useNestedTransactions = true // see https://github.com/JetBrains/Exposed/issues/605
 
             DatabaseInitializer.createSchemaAndTestData()
 

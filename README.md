@@ -6,7 +6,8 @@ This repository accompanies a blog post about
 The application stores Actors and Movies in an SQL database and exposes them via a 
 simple REST api. The REST API is built with [Javalin](https://javalin.io/).
 
-There are two variants, one with H2 and one with Postgres.
+There are two variants, one with H2 and one with Postgres. H2 is the easiest starting point because it is an 
+in-memory database.
 
 ### Running with H2
 
@@ -30,17 +31,24 @@ Then run [MainWithPostgresAndHikari](src/main/kotlin/nl/toefel/blog/exposed/Main
  3. load test data if not already present
  4. start a API server at localhost:8080
 
-# Reading Code
+### Database diagram
 
-Start by looking at how the database tables are described [in code](src/main/kotlin/nl/toefel/blog/exposed/db/)
+![database-diagram](erd.png)
+
+# Overview of code
+
+Start by looking at how the database tables are described [in code](src/main/kotlin/nl/toefel/blog/exposed/db/).
+The database structure is specified in code very similar to SQL DDL statements. No annotations or reflection required.
 
  * [Actors.kt](src/main/kotlin/nl/toefel/blog/exposed/db/Actors.kt)
  * [Movies.kt](src/main/kotlin/nl/toefel/blog/exposed/db/Movies.kt)
  * [ActorsInMovies.kt](src/main/kotlin/nl/toefel/blog/exposed/db/ActorsInMovies.kt)
 
-Then look how the database is queried using the Kotlin Exposed DSL in the Router:
+Notice that the database types `varchar`, `integer` and `date/datetime/timestamp` map to Kotlin types 
+`String` and `Int` and `joda.DateTime`. Using these definitions, we can write queries in a type-safe manner using a DSL.
 
-[Router.kt](src/main/kotlin/nl/toefel/blog/exposed/rest/Router.kt)
+[Router.kt](src/main/kotlin/nl/toefel/blog/exposed/rest/Router.kt) contains the REST api which uses the DSL
+to serve requests. The executed SQL queries are logging at runtime for debugging [logback.xml](src/main/resources/logback.xml).
 
 To interact with the database, simply start a transaction block:
 
@@ -50,34 +58,35 @@ val actorCount = transaction {
 }
 ```
 
-`transaction` uses the connection that was configured in [MainWithH2.kt](src/main/kotlin/nl/toefel/blog/exposed/MainWithH2.kt)
+`transaction` uses the datasource that was configured in [MainWithH2.kt](src/main/kotlin/nl/toefel/blog/exposed/MainWithH2.kt)
 or [MainWithPostgresAndHikari](src/main/kotlin/nl/toefel/blog/exposed/MainWithPostgresAndHikari.kt).
   
 You can query as much as you want within a transaction block, when it goes out of scope without
 an error, it will automatically `commit()`. Leaving the scope with an exception automatically 
 triggers a `rollback()`. 
 
-The last statement of the `transaction` is returned, as in the example. 
+The last statement of the `transaction` is returned, as in the example. Transaction blocks can be nested, 
+see [NestedTransactions](NestedTransactions.md) for details.
 
-Transaction blocks can be nested. If this happens, then the outer block controls the `commit()` 
-or `rollback()`.
+### Spring transaction management
+Kotlin Exposed can use the spring transaction management. Import the [spring-transaction](https://mvnrepository.com/artifact/org.jetbrains.exposed/spring-transaction?repo=kotlin-exposed).
+ dependency. 
 
-```kotlin
-
-transaction {
-    val count = Actors.selectAll().count()  // returns 5
-    transaction {
-        Actors.insert {
-          it[firstName] = "bruce"
-        }
-    }  // does not automatically commit because of the outer transaction 
-    
-    rollback() // reverts the insert!
-}
-
+```groovy
+    implementation "org.jetbrains.exposed:spring-transaction:0.16.1"
 ```
 
+Then create the `org.jetbrains.exposed.spring.SpringTransactionManager` bean in your application config: 
+```kotlin
+    @Bean
+    fun transactionManager(dataSource: HikariDataSource): SpringTransactionManager {
+        val transactionManager = SpringTransactionManager(
+        dataSource, DEFAULT_ISOLATION_LEVEL, DEFAULT_REPETITION_ATTEMPTS)
+        return transactionManager
+    }
+```
 
+There is also an [exposed-spring-boot-starter](https://github.com/JetBrains/Exposed/tree/master/exposed-spring-boot-starter).
 
 # Using the REST apis
 When started, you can use these URL's to interact with it:
@@ -96,11 +105,15 @@ When started, you can use these URL's to interact with it:
     curl -X DELETE http://localhost:8080/actors/2
     
     
-    
     # fetch all movies
     curl http://localhost:8080/movies
     
     # fetch a specific movie to see which actors are in it
     curl http://localhost:8080/movies/2
     
+## More info
 
+ * [Exposed README](https://github.com/JetBrains/Exposed)
+ * [Exposed wiki](https://github.com/JetBrains/Exposed/wiki) with the docs.
+ * [Baeldung Guide to the Kotlin Exposed framework](https://www.baeldung.com/kotlin-exposed-persistence) older resource
+ * [Bits and blobs of Kotlin/Exposed JDBC framework](https://medium.com/@OhadShai/bits-and-blobs-of-kotlin-exposed-jdbc-framework-f1ee56dc8840)

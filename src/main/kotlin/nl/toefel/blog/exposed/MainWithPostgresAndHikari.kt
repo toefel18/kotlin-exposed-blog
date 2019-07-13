@@ -31,21 +31,13 @@ class MainWithPostgresAndHikari {
                 username = "exposed",
                 password = "exposed")
 
-            // Database.connect will configure the HikariDataSource for use by Kotlin Exposed.
-            // Code can start a transaction to interact with the database
-            //
-            // transaction {
-            //     Interact with tables like Actors/Movies
-            // }
-            Database.connect(hikariDataSource)
+            val db = Database.connect(hikariDataSource)
+            db.useNestedTransactions = true // see https://github.com/JetBrains/Exposed/issues/605
 
             DatabaseInitializer.createSchemaAndTestData()
 
             Router(8080).start().printHints()
         }
-
-        const val maxBackoffMillis = 16000L
-        val defaultBackoffMillis = generateSequence(1000L) { min(it * 2, maxBackoffMillis) }
 
         /**
          * Creates a HikariDataSource and returns it. If any exception is thrown, the operation is retried after x millis as
@@ -53,7 +45,7 @@ class MainWithPostgresAndHikari {
          * encountered exception.
          */
         tailrec fun createHikariDataSourceWithRetry(jdbcUrl: String, username: String, password: String,
-                                                    backoffSequence: Iterator<Long> = defaultBackoffMillis.iterator()): HikariDataSource {
+                                                    backoffSequenceMs: Iterator<Long> = defaultBackoffSequenceMs.iterator()): HikariDataSource {
             try {
                 val config = HikariConfig()
                 config.jdbcUrl = jdbcUrl
@@ -63,13 +55,16 @@ class MainWithPostgresAndHikari {
                 return HikariDataSource(config)
             } catch (ex: Exception) {
                 logger.error("Failed to create data source ${ex.message}")
-                if (!backoffSequence.hasNext()) throw ex
+                if (!backoffSequenceMs.hasNext()) throw ex
             }
-            val backoffMillis = backoffSequence.next()
+            val backoffMillis = backoffSequenceMs.next()
             logger.info("Trying again in $backoffMillis millis")
             Thread.sleep(backoffMillis)
-            return createHikariDataSourceWithRetry(jdbcUrl, username, password, backoffSequence)
+            return createHikariDataSourceWithRetry(jdbcUrl, username, password, backoffSequenceMs)
         }
+
+        val maxBackoffMs = 16000L
+        val defaultBackoffSequenceMs = generateSequence(1000L) { min(it * 2, maxBackoffMs) }
     }
 }
 
