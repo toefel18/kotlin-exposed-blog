@@ -12,14 +12,21 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-//    compile "org.jetbrains.kotlin:kotlin-reflect"
 
+    // logging deps
     compile "org.slf4j:slf4j-api:1.7.26"
     compile "ch.qos.logback:logback-classic:1.2.3"
 
+    // database deps
     compile 'com.zaxxer:HikariCP:3.3.1'
     compile 'org.postgresql:postgresql:42.2.5'
-    implementation 'org.jetbrains.exposed:exposed:0.14.1'
+    compile 'com.h2database:h2:1.4.199'
+    compile 'org.jetbrains.exposed:exposed:0.14.1'
+
+    // simple api router
+    compile 'io.javalin:javalin:3.1.0'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
+    compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9'
 
     testCompile 'io.kotlintest:kotlintest-runner-junit5:3.3.2'
 }
