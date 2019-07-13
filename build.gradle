@@ -19,7 +19,7 @@ dependencies {
 
     // database deps
     compile 'com.zaxxer:HikariCP:3.3.1'
-    compile 'org.postgresql:postgresql:42.2.5'
+    compile 'org.postgresql:postgresql:42.2.6'
     compile 'com.h2database:h2:1.4.199'
     compile 'org.jetbrains.exposed:exposed:0.16.1'
 
