@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory
  * 1. configures a request logger
  * 2. enables CORS on all domains
  * 3. configures available paths and their handlers
+ * 4. transforms database results to and from DTOs (client interface)
  */
 class Router(val port: Int) {
     private val logger: Logger = LoggerFactory.getLogger(Router::class.java)
