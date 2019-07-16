@@ -30,6 +30,7 @@ class Router(val port: Int) {
         .delete("/actors/:id", ::deleteActor)
         .get("/movies", ::listMovies)
         .get("/movies/:id", ::getMovie)
+        .get("/actingProducers/", ::listActingProducers)
 
     private fun logRequest(ctx: Context, executionTimeMs: Float) =
         logger.info("${ctx.method()} ${ctx.fullUrl()} status=${ctx.status()} durationMs=$executionTimeMs")
@@ -47,7 +48,8 @@ class Router(val port: Int) {
     }
 
     fun listAndFilterActors(ctx: Context) {
-        val actorDtos = transaction { // uses the connections initialized via Database.connect() in main!
+        val actorDtos = transaction {
+            // uses the connections initialized via Database.connect() in main!
             val actorsQuery = Actors.selectAll()
 
             // enable additional filters via query params if they are present (example: ?firstName=Angelina)
@@ -133,6 +135,31 @@ class Router(val port: Int) {
             } else {
                 ctx.json(movieDto).status(200)
             }
+        }
+    }
+
+    fun listActingProducers(ctx: Context) {
+        val movieDto: MovieWithActorDto? = transaction {
+            val movieOrNull = Movies.select { Movies.id eq movieId }.firstOrNull()
+
+            // if movie is not null, fetch the actors and map to the DTO
+            movieOrNull?.let { movie ->
+                val actors = ActorsInMovies
+                    .innerJoin(Actors)
+                    .innerJoin(Movies)
+                    .slice(Actors.columns) // only select these columns to reduce data load
+                    .select { Movies.id eq movieId }
+//                        .map { println(it); it } // this shows the contents of the resultset rows
+                    .map { mapToActorDto(it) }
+
+                mapToMovieWithActorDto(movie, actors)
+            }
+        }
+
+        if (movieDto == null) {
+            ctx.json("no movie found with id $movieId").status(404)
+        } else {
+            ctx.json(movieDto).status(200)
         }
     }
 }
