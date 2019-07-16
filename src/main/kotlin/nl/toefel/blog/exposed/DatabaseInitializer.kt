@@ -58,10 +58,10 @@ object DatabaseInitializer {
         )
 
         val movies = listOf(
-            MovieWithActorDto(null, "Gladiator", "Universal Pictures", "2000-05-01", listOf(russellCrowe, ellenPaige, craigDaniel)),
-            MovieWithActorDto(null, "Guardians of the galaxy", "Marvel", "2014-07-21", listOf(angelinaGrace, bradPitt, ellenPaige, angelinaJolie, johnnyDepp)),
-            MovieWithActorDto(null, "Fight club", "FOX 2000", "1999-09-13", listOf(bradPitt, jenniferAniston, edwardNorton)),
-            MovieWithActorDto(null, "13 Reasons Why", "Johnny", "2016-01-01", listOf(angelinaJolie, jenniferAniston))
+            MovieWithActorDto(null, "Gladiator", johnnyDepp.firstName, "2000-05-01", listOf(russellCrowe, ellenPaige, craigDaniel)),
+            MovieWithActorDto(null, "Guardians of the galaxy", johnnyDepp.firstName, "2014-07-21", listOf(angelinaGrace, bradPitt, ellenPaige, angelinaJolie, johnnyDepp)),
+            MovieWithActorDto(null, "Fight club", craigDaniel.firstName, "1999-09-13", listOf(bradPitt, jenniferAniston, edwardNorton)),
+            MovieWithActorDto(null, "13 Reasons Why", "Suzuki", "2016-01-01", listOf(angelinaJolie, jenniferAniston))
         )
 
         transaction {
