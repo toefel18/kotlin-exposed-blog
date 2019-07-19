@@ -19,7 +19,6 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.slf4j.Logger
@@ -41,8 +40,8 @@ class Router(val port: Int) {
         .delete("/actors/:id", ::deleteActor)
         .get("/movies", ::listMovies)
         .get("/movies/:id", ::getMovie)
-        .get("/actingProducers", ::listMoviesWithActingProducers)
-        .get("/actorsByMovie", ::listMovieActorCount)
+        .get("/moviesActorCount", ::listMovieActorCount)
+        .get("/moviesWithActingProducers", ::listMoviesWithActingProducers)
 
     private fun logRequest(ctx: Context, executionTimeMs: Float) =
         logger.info("${ctx.method()} ${ctx.fullUrl()} status=${ctx.status()} durationMs=$executionTimeMs")
@@ -57,6 +56,8 @@ class Router(val port: Int) {
         logger.info("Navigate to: http://localhost:8080/actors?firstName=Angelina")
         logger.info("Navigate to: http://localhost:8080/movies")
         logger.info("Navigate to: http://localhost:8080/movies/2")
+        logger.info("Navigate to: http://localhost:8080/moviesActorCount")
+        logger.info("Navigate to: http://localhost:8080/moviesWithActingProducers")
     }
 
     fun listAndFilterActors(ctx: Context) {
@@ -149,19 +150,10 @@ class Router(val port: Int) {
         }
     }
 
-    fun listMoviesWithActingProducers(ctx: Context) {
-        val moviesProducedByActors = transaction {
-            Join(Actors, Movies, JoinType.INNER, additionalConstraint = { Actors.firstName eq Movies.producerName })
-                .slice(Movies.name, Actors.firstName, Actors.lastName)
-                .selectAll()
-                .map { MovieWithProducingActorDto(it[Movies.name], "${it[Actors.firstName]} ${it[Actors.lastName]}") }
-        }
-        ctx.json(moviesProducedByActors).status(200)
-    }
-
     fun listMovieActorCount(ctx: Context) {
         val movieActorCounts = transaction {
-            Movies.innerJoin(ActorsInMovies)
+            Movies
+                .innerJoin(ActorsInMovies)
                 .innerJoin(Actors)
                 .slice(Movies.name, Actors.firstName.count())
                 .selectAll()
@@ -171,6 +163,18 @@ class Router(val port: Int) {
         ctx.json(movieActorCounts).status(200)
     }
 
+    /**
+     * Lists all movies that have a producer which is also known as an actor
+     */
+    fun listMoviesWithActingProducers(ctx: Context) {
+        val moviesProducedByActors = transaction {
+            Join(Actors, Movies, JoinType.INNER, additionalConstraint = { Actors.firstName eq Movies.producerName })
+                .slice(Movies.name, Actors.firstName, Actors.lastName)
+                .selectAll()
+                .map { MovieWithProducingActorDto(it[Movies.name], "${it[Actors.firstName]} ${it[Actors.lastName]}") }
+        }
+        ctx.json(moviesProducedByActors).status(200)
+    }
 }
 
 
