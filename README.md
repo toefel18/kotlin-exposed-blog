@@ -92,7 +92,7 @@ There is also an [exposed-spring-boot-starter](https://github.com/JetBrains/Expo
 When started, you can use these URL's to interact with it:
 
     # fetch all actors
-    curl http://localhost:8080/actors
+    curl http://localhost:8080/actors | python -m json.tool
     
     # fetch all actors with first name Angelina
     curl http://localhost:8080/actors?firstName=Angelina

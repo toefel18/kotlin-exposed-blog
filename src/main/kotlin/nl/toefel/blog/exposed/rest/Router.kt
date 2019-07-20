@@ -37,6 +37,7 @@ class Router(val port: Int) {
     val app = Javalin.create { cfg -> cfg.requestLogger(::logRequest).enableCorsForAllOrigins() }
         .get("/actors", ::listAndFilterActors)
         .post("/actors", ::createActor)
+        .get("/actors/:id", ::getActor)
         .delete("/actors/:id", ::deleteActor)
         .get("/movies", ::listMovies)
         .get("/movies/:id", ::getMovie)
@@ -54,6 +55,7 @@ class Router(val port: Int) {
     fun printHints() {
         logger.info("Navigate to: http://localhost:8080/actors")
         logger.info("Navigate to: http://localhost:8080/actors?firstName=Angelina")
+        logger.info("Navigate to: http://localhost:8080/actors/1")
         logger.info("Navigate to: http://localhost:8080/movies")
         logger.info("Navigate to: http://localhost:8080/movies/2")
         logger.info("Navigate to: http://localhost:8080/moviesActorCount")
@@ -88,6 +90,24 @@ class Router(val port: Int) {
         }
 
         ctx.json(actorDto.copy(id = insertedActorId))
+    }
+
+    fun getActor(ctx: Context) {
+        val actorId = ctx.pathParam("id").toIntOrNull()
+        if (actorId == null) {
+            ctx.json("invalid id").status(400)
+        } else {
+            val actorDto = transaction {
+                Actors.select {Actors.id eq actorId}
+                    .map { mapToActorDto(it) }
+                    .firstOrNull()
+            }
+            if (actorDto == null) {
+                ctx.status(404)
+            } else {
+                ctx.json(actorDto).status(200)
+            }
+        }
     }
 
     fun deleteActor(ctx: Context) {
@@ -131,8 +151,8 @@ class Router(val port: Int) {
 
                 // if movie is not null, fetch the actors and map to the DTO
                 movieOrNull?.let { movie ->
-                    val actors = ActorsInMovies
-                        .innerJoin(Actors)
+                    val actors = Actors
+                        .innerJoin(ActorsInMovies)
                         .innerJoin(Movies)
                         .slice(Actors.columns) // only select these columns to reduce data load
                         .select { Movies.id eq movieId }
