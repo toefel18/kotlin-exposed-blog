@@ -1,7 +1,6 @@
 # Kotlin Exposed (SQL library) demo
 
-This repository accompanies a blog post about 
-[Kotlin Exposed (Kotlin SQL library)](https://github.com/JetBrains/Exposed).
+This repository accompanies a blog post [Kotlin Exposed - A lightweight SQL library](https://blog.jdriven.com/2019/07/kotlin-exposed-a-lightweight-sql-library/).
 
 The application stores Actors and Movies in an SQL database and exposes them via a 
 simple REST api. The REST API is built with [Javalin](https://javalin.io/).
