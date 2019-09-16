@@ -24,7 +24,7 @@ dependencies {
     compile 'org.jetbrains.exposed:exposed:0.16.3'
 
     // simple api router
-    compile 'io.javalin:javalin:3.1.0'
+    compile 'io.javalin:javalin:3.5.0'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.10.0.pr1'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0.pr1'
 
