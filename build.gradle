@@ -28,7 +28,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.10.0.pr1'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0.pr1'
 
-    testCompile 'io.kotlintest:kotlintest-runner-junit5:3.4.0'
+    testCompile 'io.kotlintest:kotlintest-runner-junit5:3.4.2'
 }
 
 test {
