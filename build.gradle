@@ -29,7 +29,7 @@ dependencies {
     compile 'org.jetbrains.exposed:exposed-java-time:0.22.1'
 
     // simple api router
-    compile 'io.javalin:javalin:3.7.0'
+    compile 'io.javalin:javalin:3.13.8'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.10.3'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.10.3'
 
