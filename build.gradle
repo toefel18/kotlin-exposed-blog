@@ -14,7 +14,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
     // logging deps
-    compile "org.slf4j:slf4j-api:1.7.30"
+    compile "org.slf4j:slf4j-api:1.7.32"
     compile "ch.qos.logback:logback-classic:1.2.3"
 
     // database deps
